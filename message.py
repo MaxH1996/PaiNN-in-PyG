@@ -9,7 +9,7 @@ from torch.nn import Embedding, Sequential, Linear, ModuleList, Module
 import numpy as np
 import math
 
-from helper import CosineCutoff, BesselBasis, Prepare_Message_Vector
+from helper import CosineCutoff, BesselBasis
 
 class MessagePassPaiNN(MessagePassing):
     def __init__(self, num_feat, out_channels, num_nodes, cut_off=5.0, n_rbf=20):
@@ -20,11 +20,21 @@ class MessagePassPaiNN(MessagePassing):
         self.lin_rbf = Linear(n_rbf, 3*out_channels) 
         self.silu = Func.silu
         
-        self.prepare = Prepare_Message_Vector(num_nodes)
+        
         self.RBF = BesselBasis(cut_off, n_rbf)
-        self.f_cut = CosineCutoff(cut_off)  
+        self.f_cut = CosineCutoff(cut_off)
+        self.num_nodes = num_nodes
     
-    def forward(self, x, edge_index, edge_attr, flat_shape_s,flat_shape_v):
+    def forward(self, s,v, edge_index, edge_attr):
+        
+        s = s.flatten(-1)
+        v = v.flatten(-2)
+        
+        flat_shape_v = v.shape[-1]
+        flat_shape_s = s.shape[-1]
+    
+        x =torch.cat([s, v], dim = -1)
+        
         
         x = self.propagate(edge_index, x=x, edge_attr=edge_attr
                             ,flat_shape_s=flat_shape_s, flat_shape_v=flat_shape_v)
@@ -40,7 +50,8 @@ class MessagePassPaiNN(MessagePassing):
         # r_ij channel
         rbf = self.RBF(edge_attr)
         ch1 = self.lin_rbf(rbf)
-        W = torch.einsum('ij,i->ij',ch1,edge_attr.norm(dim=-1)) # ch1 * f_cut
+        cut = self.f_cut(edge_attr.norm(dim=-1))
+        W = torch.einsum('ij,i->ij',ch1, cut) # ch1 * f_cut
         
         # s_j channel
         phi = self.lin1(s_j)
@@ -61,3 +72,9 @@ class MessagePassPaiNN(MessagePassing):
         x_j = torch.cat((dsm,dvm.flatten(-2)), dim=-1)
        
         return x_j
+    
+    def update(self, out_aggr,flat_shape_s, flat_shape_v):
+        
+        s_j, v_j = torch.split(out_aggr, [flat_shape_s, flat_shape_v], dim=-1)
+        
+        return s_j, v_j.reshape(-1, int(flat_shape_v/3), 3)

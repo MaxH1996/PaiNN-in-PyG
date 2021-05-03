@@ -16,6 +16,7 @@ class CosineCutoff(torch.nn.Module):
     def __init__(self, cutoff=5.0):
         super(CosineCutoff, self).__init__()
         #self.register_buffer("cutoff", torch.FloatTensor([cutoff]))
+        self.cutoff = cutoff
 
     def forward(self, distances):
         """Compute cutoff.
@@ -59,31 +60,3 @@ class BesselBasis(torch.nn.Module):
         y = sinax / norm[:,None]
 
         return y
-    
-class Prepare_Message_Vector(torch.nn.Module):
-
-    def __init__(self, num_nodes):
-        super(Prepare_Message_Vector, self).__init__()
-        self.num_nodes = num_nodes
-
-    def forward(self,s,v):
-    
-        ''' Takes inputs s and v and prepares a vector for message passing by flattening and 
-        concatenating. The vector is repeated for the total number of nodes. Works only if every 
-        node is initialized the same way.
-    
-        Args:
-            s: torch.tensor(N,1)
-            v: torch.tensor(F,3)
-        Returns:
-            troch.tensor(num_nodes,(Fx3)+N,1), flat_shape_v, flat_shape_s
-         '''
-    
-        flat_shape_v = v.flatten().shape
-        flat_shape_s = s.flatten().shape
-    
-        message_vector = torch.cat((s.flatten(), v.flatten()))
-        message_vector = message_vector.repeat(self.num_nodes,1)
-    
-    
-        return message_vector, flat_shape_v[0], flat_shape_s[0]

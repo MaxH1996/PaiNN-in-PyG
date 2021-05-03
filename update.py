@@ -9,7 +9,7 @@ from torch.nn import Embedding, Sequential, Linear, ModuleList, Module
 import numpy as np
 import math
 
-from helper import CosineCutoff, BesselBasis, Prepare_Message_Vector
+from helper import CosineCutoff, BesselBasis
 
 
 class UpdatePaiNN(torch.nn.Module):
@@ -23,10 +23,13 @@ class UpdatePaiNN(torch.nn.Module):
         self.silu = Func.silu
         
         
-    def forward(self, out_aggr, flat_shape_s, flat_shape_v):
+    def forward(self, s,v):
         
-        # split and take linear combinations
-        s, v = torch.split(out_aggr, [flat_shape_s, flat_shape_v], dim=-1)
+        s = s.flatten(-1)
+        v = v.flatten(-2)
+        
+        flat_shape_v = v.shape[-1]
+        flat_shape_s = s.shape[-1]
         
         v_u = v.reshape(-1, int(flat_shape_v/3), 3)
         U = self.denseU(v_u)
@@ -51,6 +54,5 @@ class UpdatePaiNN(torch.nn.Module):
         dvu = torch.einsum('ijk,ij->ijk',v_u,Func.silu(top)) 
         dsu = Func.silu(middle)*UV + Func.silu(bottom) 
         
-        update = torch.cat((dsu,dvu.flatten(-2)), dim=-1)
         
-        return update
+        return dsu, dvu.reshape(-1, int(flat_shape_v/3), 3)

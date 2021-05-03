@@ -18,8 +18,8 @@ from PaiNN import PaiNN
 # F: Num. features, r_ij: cartesian positions
 F = 128
 num_nodes = 4
-s0 = torch.rand(F, dtype=torch.float)
-v0 = torch.zeros(F,3, dtype=torch.float)
+s0 = torch.rand(num_nodes,F, dtype=torch.float)
+v0 = torch.zeros(num_nodes,F,3, dtype=torch.float)
 r_ij =  torch.tensor([[0.000000,  0.000000,  -0.537500],
   [0.000000,  0.000000,   0.662500],
   [0.000000,  0.866025,  -1.037500],
