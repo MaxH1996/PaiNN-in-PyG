@@ -32,7 +32,7 @@ row, col = edge_index
 edge_attr = (r_ij[row] - r_ij[col])
 #print(edge_index.dtype == torch.long)
 
-
-PA = PaiNN(F, F, 4)
-form = PA(s0,v0, edge_index,edge_attr)
-print(form[0])
+if __name__ == "__main__":
+    PA = PaiNN(F, F, 4)
+    form = PA(s0,v0, edge_index,edge_attr)
+    print(form[0])

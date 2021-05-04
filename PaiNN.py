@@ -23,10 +23,13 @@ class PaiNN(torch.nn.Module):
            representation to be compatible with PyG, the arrays are flattened and concatenated. 
            Important to note is that the out_channels must match number of features'''
         
-        self.num_nodes = num_nodes
+        
         self.num_interactions = num_interactions
         self.cut_off = cut_off
         self.n_rbf = n_rbf
+        self.num_nodes = num_nodes
+        self.num_feat = num_feat
+        self.out_channels = out_channels
         
         self.Message = MessagePassPaiNN(num_feat, out_channels, num_nodes, cut_off, n_rbf)
         self.Update = UpdatePaiNN(num_feat, out_channels, num_nodes)
@@ -42,9 +45,12 @@ class PaiNN(torch.nn.Module):
         
         for i in range(self.num_interactions-1):
             
-            s_temp,v_temp = self.Message(s,v, edge_index, edge_attr)
+            Message = MessagePassPaiNN(self.num_feat, self.out_channels, self.num_nodes, self.cut_off, self.n_rbf)
+            Update = UpdatePaiNN(self.num_feat, self.out_channels, self.num_nodes)
+            
+            s_temp,v_temp = Message(s,v, edge_index, edge_attr)
             s, v = s_temp+s, v_temp+v
-            s_temp,v_temp = self.Update(s,v) 
+            s_temp,v_temp = Update(s,v) 
             s, v = s_temp+s, v_temp+v
         
         
