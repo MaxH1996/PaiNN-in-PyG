@@ -33,22 +33,29 @@ class PaiNN(torch.nn.Module):
         
         #self.Message = MessagePassPaiNN(num_feat, out_channels, num_nodes, cut_off, n_rbf)
         #self.Update = UpdatePaiNN(num_feat, out_channels, num_nodes)
+        
+        self.list_message = nn.ModuleList(
+            [
+                MessagePassPaiNN(num_feat, out_channels, num_nodes, cut_off, n_rbf)
+                for _ in range(self.num_interactions)
+            ]
+        )
+        self.list_update = nn.ModuleList(
+            [
+                UpdatePaiNN(num_feat, out_channels, num_nodes)
+                for _ in range(self.num_interactions)
+            ]
+        )
 
 
     def forward(self, s,v, edge_index, edge_attr):
         
-        # First interaction loop. No addition to update from initial s_i
         
         for i in range(self.num_interactions):
             
-            Message = MessagePassPaiNN(self.num_feat, self.out_channels, self.num_nodes, self.cut_off, self.n_rbf)
-            Update = UpdatePaiNN(self.num_feat, self.out_channels, self.num_nodes)
-            
-            s_temp,v_temp = Message(s,v, edge_index, edge_attr)
+            s_temp,v_temp = self.list_message[i](s,v, edge_index, edge_attr)
             s, v = s_temp+s, v_temp+v
-            s_temp,v_temp = Update(s,v) 
-            s, v = s_temp+s, v_temp+v
-        
-        
+            s_temp,v_temp = self.list_update[i](s,v) 
+            s, v = s_temp+s, v_temp+v       
         
         return s,v 
