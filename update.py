@@ -45,7 +45,7 @@ class UpdatePaiNN(torch.nn.Module):
         s_u = self.lin_up(s_u) 
         s_u = Func.silu(s_u)
         s_u = self.lin2(s_u)
-        s_u = Func.silu(s_u)
+        #s_u = Func.silu(s_u)
         
         # final split
         top, middle, bottom = torch.tensor_split(s_u,3,dim=-1)
