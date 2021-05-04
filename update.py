@@ -51,8 +51,8 @@ class UpdatePaiNN(torch.nn.Module):
         top, middle, bottom = torch.tensor_split(s_u,3,dim=-1)
         
         # outputs
-        dvu = torch.einsum('ijk,ij->ijk',v_u,Func.silu(top)) 
-        dsu = Func.silu(middle)*UV + Func.silu(bottom) 
+        dvu = torch.einsum('ijk,ij->ijk',v_u,top) 
+        dsu = middle*UV + bottom
         
         
         return dsu, dvu.reshape(-1, int(flat_shape_v/3), 3)
