@@ -1,13 +1,22 @@
-import torch
-import math
+import torch 
+from torch_geometric.data import Data
+from torch_geometric.nn import MessagePassing, radius_graph
+from torch_geometric.utils import add_self_loops, degree
+
+import ase
 import torch.nn as nn
+import torch.nn.functional as Func
+from torch.nn import Embedding, Sequential, Linear, ModuleList, Module
 import numpy as np
+from torch import linalg as LA
+import math
 
-class CosineCutoff(nn.Module):
+class CosineCutoff(torch.nn.Module):
 
-    def __init__(self, cutoff=1.0):
+    def __init__(self, cutoff=5.0):
         super(CosineCutoff, self).__init__()
-        self.register_buffer("cutoff", torch.FloatTensor([cutoff]))
+        #self.register_buffer("cutoff", torch.FloatTensor([cutoff]))
+        self.cutoff = cutoff
 
     def forward(self, distances):
         """Compute cutoff.
@@ -25,10 +34,12 @@ class CosineCutoff(nn.Module):
         cutoffs *= (distances < self.cutoff).float()
         return cutoffs
     
-class BesselBasis(nn.Module):
-    
+class BesselBasis(torch.nn.Module):
+    """
+    Sine for radial basis expansion with coulomb decay. (0th order Bessel from DimeNet)
+    """
 
-    def __init__(self, cutoff=1.0, n_rbf=None):
+    def __init__(self, cutoff=5.0, n_rbf=None):
         """
         Args:
             cutoff: radial cutoff
@@ -49,32 +60,3 @@ class BesselBasis(nn.Module):
         y = sinax / norm[:,None]
 
         return y
-    
-class Prepare_Message_Vector(nn.Module):
-
-    def __init__(self, num_nodes):
-        super(Prepare_Message_Vector, self).__init__()
-        self.num_nodes = num_nodes
-
-    def forward(self,s,v):
-    
-        ''' Takes inputs s and v and prepares a vector for message passing by flattening and 
-        concatenating. The vector is repeated for the total number of nodes. Works only if every 
-        node is initialized the same way.
-    
-        Args:
-            s: torch.tensor(N,1)
-            v: torch.tensor(F,3)
-        Returns:
-            troch.tensor(num_nodes,(Fx3)+N,1), flat_shape_v, flat_shape_s
-         '''
-    
-        flat_shape_v = v.flatten().shape
-        flat_shape_s = s.flatten().shape
-    
-        message_vector = torch.cat((s.flatten(), v.flatten()))
-        message_vector = message_vector.repeat(self.num_nodes,1)
-    
-    
-        return message_vector, flat_shape_v[0], flat_shape_s[0]
-    
