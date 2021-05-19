@@ -97,18 +97,18 @@ class MessagePassPaiNN(MessagePassing):
     
 class MessagePassPaiNN_NE(MessagePassing):
     def __init__(self, num_feat, out_channels, num_nodes, cut_off=5.0, n_rbf=20):
-    super(MessagePassPaiNN_NE, self).__init__(aggr='add') 
+        super(MessagePassPaiNN_NE, self).__init__(aggr='add') 
         
-    self.lin1 = Linear(num_feat, out_channels) 
-    self.lin2 = Linear(out_channels, 3*out_channels) 
-    self.lin_rbf = Linear(n_rbf, 3*out_channels) 
-    self.silu = Func.silu
+        self.lin1 = Linear(num_feat, out_channels) 
+        self.lin2 = Linear(out_channels, 3*out_channels) 
+        self.lin_rbf = Linear(n_rbf, 3*out_channels) 
+        self.silu = Func.silu
         
-    #self.prepare = Prepare_Message_Vector(num_nodes)
-    self.RBF = BesselBasis(cut_off, n_rbf)
-    self.f_cut = CosineCutoff(cut_off)
-    self.num_nodes = num_nodes
-    self.num_feat = num_feat
+        #self.prepare = Prepare_Message_Vector(num_nodes)
+        self.RBF = BesselBasis(cut_off, n_rbf)
+        self.f_cut = CosineCutoff(cut_off)
+        self.num_nodes = num_nodes
+        self.num_feat = num_feat
     
     def forward(self, s,v,s_nuc,v_nuc, edge_index, edge_attr):
         
