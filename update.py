@@ -21,6 +21,7 @@ class UpdatePaiNN(torch.nn.Module):
         self.denseV = Linear(num_feat,out_channels, bias = False) 
         self.lin2 = Linear(out_channels, 3*out_channels) 
         self.silu = Func.silu
+        self.num_feat = num_feat
         
         
     def forward(self, s,v):
@@ -51,7 +52,8 @@ class UpdatePaiNN(torch.nn.Module):
         #s_u = Func.silu(s_u)
         
         # final split
-        top, middle, bottom = torch.tensor_split(s_u,3,dim=-1)
+        top, middle, bottom = torch.split(s_u, self.num_feat, dim=-1)
+        
         
         # outputs
         dvu = torch.einsum('ijk,ij->ijk',v_u,top) 
