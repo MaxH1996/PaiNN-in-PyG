@@ -95,16 +95,14 @@ class Bipartite(Data):
             return super().__inc__(key, value)
         
 class BatchGraphNuc(nn.Module):
-    def __init__(self, dim=1):
+    def __init__(self, cut_off):
         super(BatchGraphNuc, self).__init__()
-        self.dim = dim
+        self.dim = cut_off
         
     def forward(self,  s_nuc,v_nuc, coord_elec, coord_nuc):
         
         batch_dim, n_elec = coord_elec.shape[:2]
         
-        
-        edge_attr =  (coord_elec[..., :, None, :] - coord_nuc[..., None, :, :]).reshape(-1,3)
         coord_nuc = coord_nuc.repeat(batch_dim,1,1)
         
         data_list = [Bipartite(radius(e,n,5.0),e,n,sn,vn, n_elec) 
@@ -112,6 +110,9 @@ class BatchGraphNuc(nn.Module):
         
         loader = DataLoader(data_list, batch_size=batch_dim)
         batch = next(iter(loader))
+        
+        row, col = batch.edge_index
+        edge_attr = batch.coord_elec[col] - batch.coord_nuc[row]
         
         return (batch.s_nuc, batch.v_nuc, batch.edge_index, edge_attr)
     
