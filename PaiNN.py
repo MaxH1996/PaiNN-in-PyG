@@ -32,8 +32,7 @@ class PaiNN(torch.nn.Module):
         self.out_channels = out_channels
         self.lin = Linear(num_feat, num_feat)
         self.silu = Func.silu
-        
-        
+
         self.list_message = nn.ModuleList(
             [
                 MessagePassPaiNN(num_feat, out_channels, num_nodes, cut_off, n_rbf)
@@ -46,12 +45,8 @@ class PaiNN(torch.nn.Module):
                 for _ in range(self.num_interactions)
             ]
         )
-        
-        
-
 
     def forward(self, s,v, edge_index, edge_attr):
-        
         
         for i in range(self.num_interactions):
             
@@ -63,8 +58,7 @@ class PaiNN(torch.nn.Module):
         s=self.lin(s)
         s=self.silu(s)
         s=self.lin(s)
-        
-        
+           
         return s
     
 class PaiNNElecNuc(torch.nn.Module):
@@ -102,8 +96,7 @@ class PaiNNElecNuc(torch.nn.Module):
             ]
         )
     def forward(self, s,v, s_nuc,v_nuc, edge_index, edge_attr, edge_index_nuc, edge_attr_nuc):
-        
-        
+
         for i in range(self.num_interactions):
             
             s_temp,v_temp = self.list_message[i](s,v, edge_index, edge_attr)
@@ -114,7 +107,6 @@ class PaiNNElecNuc(torch.nn.Module):
             s_temp,v_temp = self.list_update[i](s,v) 
             s, v = s_temp+s, v_temp+v
             
-        
         s = self.linear(s)
         s = self.silu(s)
         s = self.linear(s)
